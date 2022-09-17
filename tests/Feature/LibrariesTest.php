@@ -3,6 +3,7 @@
 use App\Models\Book;
 use App\Models\Library;
 use App\Models\User;
+use Illuminate\Support\Arr;
 use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
@@ -77,10 +78,9 @@ test('a user can search through books list', function () {
     $response = $this->get('/api/books?search=fox');
     $response->assertStatus(200);
     $response->assertSee(['total' => 2]);
-    $response->assertSee(['total' => 2]);
     $response->assertSee(['per_page' => 10]);
-    $response->assertSee($book1->toArray());
-    $response->assertSee($book2->toArray());
+    $response->assertSee(Arr::except($book1->toArray(), 'likers'));
+    $response->assertSee(Arr::except($book2->toArray(), 'likers'));
 });
 
 test('a user can get book details', function () {
