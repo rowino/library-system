@@ -11,6 +11,10 @@ class Book extends Model
 
     protected $fillable = ['title', 'description', 'author'];
 
+    protected $appends = ['liked'];
+
+    protected $with = ['likers'];
+
     public function libraries()
     {
         return $this->belongsToMany(Library::class, 'library_books')
@@ -22,5 +26,10 @@ class Book extends Model
     {
         return $this->belongsToMany(User::class, 'user_likes')
                     ->withTimestamps();
+    }
+
+    public function getLikedAttribute()
+    {
+        return $this->likers->pluck('id')->contains(auth()->id());
     }
 }

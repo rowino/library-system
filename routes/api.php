@@ -2,8 +2,10 @@
 
 use App\Models\Book;
 use App\Models\Library;
+use App\Models\User;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,6 +19,21 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+
+Route::post('/login', function (Request $request) {
+    $request->validate([
+        'email' => ['required', 'email'],
+        'password' => ['required'],
+    ]);
+    $user = User::where('email', $request->email)->first();
+    if ($user && Hash::check($request->password, $user->password)) {
+        return [
+            'token' => $user->createToken('main-app')->plainTextToken,
+            'user' => $user
+        ];
+    }
+    return response(['error' => 'Invalid email/password'], 401);
+});
 Route::middleware('auth:sanctum')
      ->group(function () {
          Route:: get('/user', function (Request $request) {
@@ -65,6 +82,20 @@ Route::middleware('auth:sanctum')
                  'description' => ['nullable'],
              ]);
              $book->update($data);
+             return $book;
+         });
+
+         Route::post('/books/{book}/like', function (Request $request, Book $book) {
+             $request->validate([
+                 'liked' => ['required', 'bool'],
+             ]);
+
+             if ($request->liked) {
+                 $book->likers()->syncWithoutDetaching(auth()->id());
+             } else {
+                 $book->likers()->detach(auth()->id());
+             }
+             $book->load('likers');
              return $book;
          });
 
